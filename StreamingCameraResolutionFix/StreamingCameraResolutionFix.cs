@@ -1,11 +1,7 @@
 using Elements.Core;
-
 using FrooxEngine;
-
 using HarmonyLib;
-
 using ResoniteModLoader;
-
 using System;
 
 namespace StreamingCameraResolutionFix {
@@ -35,12 +31,12 @@ namespace StreamingCameraResolutionFix {
 				// Ensure config is initialized
 				if (config == null) return;
 
-				// Get the local user
-				User localUser = Userspace.UserspaceWorld?.LocalUser;
-				if (localUser == null) return;
+				// Ensure Userspace is valid before assigning localUser
+				if (Userspace.UserspaceWorld?.LocalUser == null) return;
+				User localUser = Userspace.UserspaceWorld.LocalUser;
 
-				// Get the user's slot (where their avatar and camera are stored)
-				Slot userSlot = localUser.ActiveUserRoot;
+				// Get the user's root slot (where their avatar and camera are stored)
+				Slot userSlot = localUser.Root.Slot;
 				if (userSlot == null) return;
 
 				// Ensure this RenderTextureProvider is inside the user's slot and belongs to a Streaming Camera
