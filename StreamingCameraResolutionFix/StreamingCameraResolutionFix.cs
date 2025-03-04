@@ -12,7 +12,7 @@ namespace StreamingCameraResolutionFix {
 		public override string Version => VERSION_CONSTANT;
 		public override string Link => "https://github.com/troyBORG/StreamingCameraResolutionFix/";
 
-		public static ModConfiguration config = null!; // Ensure it's initialized later
+		public static ModConfiguration config = null!;
 
 		[AutoRegisterConfigKey]
 		private static ModConfigurationKey<int2> STREAMING_RESOLUTION =
@@ -24,29 +24,33 @@ namespace StreamingCameraResolutionFix {
 			harmony.PatchAll();
 		}
 
-		[HarmonyPatch(typeof(RenderTextureProvider), "OnCommonUpdate")]
-		static class StreamingCameraResolutionPatch {
+		[HarmonyPatch(typeof(InteractiveCamera), "OnCommonUpdate")]
+		static class InteractiveCameraResolutionPatch {
 			[HarmonyPostfix]
-			static void ChangeResolution(RenderTextureProvider __instance) {
+			static void ChangeResolution(InteractiveCamera __instance) {
 				// Ensure config is initialized
 				if (config == null) return;
 
-				// Ensure Userspace is valid before assigning localUser
+				// Ensure Userspace is valid
 				if (Userspace.UserspaceWorld?.LocalUser == null) return;
 				User localUser = Userspace.UserspaceWorld.LocalUser;
 
-				// Get the user's root slot (where their avatar and camera are stored)
+				// Get the user's root slot
 				Slot userSlot = localUser.Root.Slot;
 				if (userSlot == null) return;
 
-				// Ensure this RenderTextureProvider is inside the user's slot and belongs to a Streaming Camera
+				// Ensure we are modifying the local user's InteractiveCamera
 				if (!__instance.Slot.IsChildOf(userSlot)) return;
 
 				// Get the resolution from mod settings
 				int2 customResolution = config.GetValue(STREAMING_RESOLUTION);
-				__instance.Size.Value = customResolution;
 
-				Msg($"[StreamingCameraResolutionFix] Set Streaming Camera resolution to {customResolution.x}x{customResolution.y}");
+				// Apply the resolution to InteractiveCamera properties
+				__instance.PreviewWidth.Value = customResolution.x / 2;  // Following observed behavior
+				__instance.PreviewHeight.Value = customResolution.y / 2;
+				__instance.RenderWidth.Value = customResolution.x;  // Full resolution width
+
+				Msg($"[StreamingCameraResolutionFix] Set InteractiveCamera resolution to {customResolution.x}x{customResolution.y}");
 			}
 		}
 	}
